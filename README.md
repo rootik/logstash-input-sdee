@@ -1,8 +1,8 @@
-# Logstash HTTP input plugin
+# Logstash SDEE/CIDEE input plugin
 
 This plugin is based off [logstash-input-http_poller](https://github.com/logstash-plugins/logstash-input-http_poller) by @maximede.
 
-This [Logstash](https://github.com/elasticsearch/logstash) input plugin allows you to call an Cisco CIDEE/SDEE HTTP API, decode the output of it into event(s), and send them on their merry way.
+This [Logstash](https://github.com/elasticsearch/logstash) input plugin allows you to call an Cisco SDEE/CIDEE HTTP API, decode the output of it into event(s), and send them on their merry way.
 
 The idea behind this plugins came from a need to gather events from Cisco security devices and feed them to ELK stack.
 

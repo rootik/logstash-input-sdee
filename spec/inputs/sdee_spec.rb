@@ -2,11 +2,10 @@ require "logstash/devutils/rspec/spec_helper"
 require 'logstash/inputs/http_poller'
 require 'flores/random'
 
-describe LogStash::Inputs::HTTP_Poller do
-  let(:metadata_target) { "_http_poller_metadata" }
+describe LogStash::Inputs::SDEE do
+  let(:metadata_target) { "_sdee_metadata" }
   let(:queue) { Queue.new }
-  let(:default_interval) { 5 }
-  let(:default_name) { "url1 " }
+  let(:default_interval) { 60 }
   let(:default_url) { "http://localhost:1827" }
   let(:default_urls) {
     {
@@ -21,10 +20,10 @@ describe LogStash::Inputs::HTTP_Poller do
       "metadata_target" => metadata_target
     }
   }
-  let(:klass) { LogStash::Inputs::HTTP_Poller }
+  let(:class) { LogStash::Inputs::SDEE }
 
   describe "instances" do
-    subject { klass.new(default_opts) }
+    subject { class.new(default_opts) }
 
     before do
       subject.register
