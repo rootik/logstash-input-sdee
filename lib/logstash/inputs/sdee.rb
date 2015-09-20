@@ -2,8 +2,12 @@
 require "logstash/inputs/base"
 require "logstash/namespace"
 require "logstash/plugin_mixins/http_client"
+require "yaml"
+require "uri"
+require "rexml/document"
 require "socket" # for Socket.gethostname
 require "manticore"
+include REXML
 
 # Note. This plugin is a WIP! Things will change and break!
 #
@@ -13,20 +17,23 @@ require "manticore"
 # input {
 #   sdee {
 #     # Supports all options supported by ruby's Manticore HTTP client
-#     method => get
-#     url => "http://ciscoips"
-#     headers => {
-#       Accept => "text/xml"
-#     }
-#     auth => {
-#       user => "cisco"
-#       password => "changeme"
-#     }
+#     http {
+#       method => get
+#       url => "http://ciscoips"
+#       headers => {
+#         Accept => "text/xml"
+#       }
+#       auth => {
+#         user => "cisco"
+#         password => "p@ssw0rd"
+#       }
 #     request_timeout => 60
+#     }
+#     session_file => "/var/lib/elasticsearch/session.db"
 #     interval => 60
 #     codec => "plain"
 #     # A hash of request metadata info (timing, response headers, etc.) will be sent here
-#     metadata_target => "sdee_metadata"
+#     metadata_target => "_sdee_metadata"
 #   }
 # }
 #
@@ -46,7 +53,7 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
   # A Hash of urls in this format : "name" => "url"
   # The name and the url will be passed in the outputed event
   #
-  config :url, :validate => :string, :required => true
+  config :http, :validate => :hash, :required => true
 
   # How often  (in seconds) the urls will be called
   config :interval, :validate => :number, :required => true
@@ -61,30 +68,96 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
 
 
   # A local File to store CIDEE SubscriptionID and SessionID
-  config :session, validate => :string, :required => true
+  config :session_file, :validate => :string, :required => true
 
   public
   def register
     @host = Socket.gethostname.force_encoding(Encoding::UTF_8)
-
+    setup_request!(@http)
+    if File.exist?(@session_file)
+      yaml = YAML.load_file(session_file)
+      if (defined?(yaml) && yaml != nil)
+        unsubscribe(@request,yaml)
+      end
+    end
     @logger.info("Registering SDEE Input", :type => @type,
-                 :url => url, :interval => @interval, :timeout => @timeout)
+                 :http => @http, :interval => @interval, :timeout => @timeout)
+    
+    @session = subscribe(@request)
+    File.open(@session_file, 'w') {|f| f.write @session.to_yaml }
+    newurl = URI.join(@http["url"], "cgi-bin/sdee-server?subscriptionId=#{@session[:subscriptionid]}&confirm=yes&maxNbrOfEvents=150&timeout=5&sessionId=#{@session[:sessionid]}")
+    @request[1] = newurl.to_s
+    rescue StandardError, java.lang.Exception => e
+     @logger.error? && @logger.error("SDEE subscription error!",
+                                    :exception => e,
+                                    :exception_message => e.message,
+                                    :exeption_backtrace => e.backtrace
+     )
 
-    setup_requests!
   end
 
   private
-  def setup_requests!
-    request = normalize_request(url)
+  def subscribe(request)
+    url = URI.join(@http["url"], "cgi-bin/sdee-server?action=open&evIdsAlert&force=yes")
+    request[1] = url.to_s
+    session = Hash.new
+    method, *request_opts = request
+    client.async.send(method, *request_opts).
+      on_success {|response| session = handle_subscription(request, response)}.
+      on_failure {|exception| http_error(request, exception)}
+    client.execute!
+    session
+  end
+  
+  private
+  def handle_subscription(request, response)
+    body = response.body
+    xml = REXML::Document.new body.to_s
+    session = Hash.new
+    sessionid = XPath.first(xml, "//sd:sessionId")
+    subscriptionid = XPath.first(xml, "//sd:subscriptionId")
+    session[:sessionid] = sessionid.text
+    session[:subscriptionid] = subscriptionid.text
+    session
+  end
+  
+  private
+  def http_error(request, exeption)
+      @logger.error? && @logger.error("Cannot read URL or send the error as an event!",
+                                      :request => structure_request(request),
+                                      :exception => exeption.to_s,
+                                      :exception_backtrace => exeption.backtrace
+      )
   end
 
   private
-  def normalize_request(url_or_spec)
-    if url_or_spec.is_a?(String)
-      res = [:get, url_or_spec]
-    elsif url_or_spec.is_a?(Hash)
+  def unsubscribe(request,session)
+    url = URI.join(@http["url"], "cgi-bin/sdee-server?action=close&subscriptionId=#{session[:subscriptionid]}&sessionId=#{session[:sessionid]}")
+    request[1] = url.to_s
+    method, *request_opts = request
+    client.async.send(method, *request_opts).
+      on_success {|response| remove_session}.
+      on_failure {|exception| http_error(request, exception)}
+    client.execute!
+  end
+  
+  private
+  def remove_session
+    if File.exist?(@session_file) 
+     File.delete(@session_file)
+    end
+  end
+
+  private
+  def setup_request!(http)
+    @request = normalize_request(http)
+  end
+
+  private
+  def normalize_request(http)
+    if http.is_a?(Hash)
       # The client will expect keys / values
-      spec = Hash[url_or_spec.clone.map {|k,v| [k.to_sym, v] }] # symbolize keys
+      spec = Hash[http.clone.map {|k,v| [k.to_sym, v] }] # symbolize keys
 
       # method and url aren't really part of the options, so we pull them out
       method = (spec.delete(:method) || :get).to_sym.downcase
@@ -95,20 +168,20 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
 
       res = [method, url, spec]
     else
-      raise LogStash::ConfigurationError, "Invalid URL or request spec: '#{url_or_spec}', expected a String or Hash!"
+      raise LogStash::ConfigurationError, "Invalid request spec: '#{http}', expected a Hash!"
     end
 
-    validate_request!(url_or_spec, res)
+    validate_request!(http, res)
     res
   end
 
   private
-  def validate_request!(url_or_spec, request)
+  def validate_request!(http, request)
     method, url, spec = request
 
     raise LogStash::ConfigurationError, "Invalid URL #{url}" unless URI::DEFAULT_PARSER.regexp[:ABS_URI].match(url)
 
-    raise LogStash::ConfigurationError, "No URL provided for request! #{url_or_spec}" unless url
+    raise LogStash::ConfigurationError, "No URL provided for request! #{http}" unless url
     if spec && spec[:auth]
       if !spec[:auth][:user]
         raise LogStash::ConfigurationError, "Auth was specified, but 'user' was not!"
@@ -123,16 +196,28 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
 
   public
   def run(queue)
-    Stud.interval(@interval) do
-      run_once(queue)
+    while true
+      begin
+        Stud.interval(@interval) do
+          run_once(queue)      
+        end
+      rescue EOFError, LogStash::ShutdownSignal
+        break
+      end
     end
   end
 
+  public
+  def teardown
+    @logger.debug("SDEE shutting down.")
+    unsubscribe(@request,@session) rescue nil
+    finished
+  end # def teardown
+
   private
   def run_once(queue)
-      request_async(queue, name, request)
-    end
-
+    request_async(queue, @request)
+    
     client.execute!
   end
 
@@ -144,8 +229,7 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
     method, *request_opts = request
     client.async.send(method, *request_opts).
       on_success {|response| handle_success(queue, request, response, Time.now - started)}.
-      on_failure {|exception|
-      handle_failure(queue, request, exception, Time.now - started)
+      on_failure {|exception| handle_failure(queue, request, exception, Time.now - started)
     }
   end
 

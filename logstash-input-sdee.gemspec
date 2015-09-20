@@ -5,6 +5,7 @@ Gem::Specification.new do |s|
   s.summary = "Poll Cisco SDEE"
   s.description = "This gem is a logstash plugin required to be installed on top of the Logstash core pipeline using $LS_HOME/bin/plugin install gemname. This gem is not a stand-alone program."
   s.authors = ["rootik"]
+  s.email = ["roootik@gmail.com"]
   s.homepage = "https://github.com/rootik/logstash-input-sdee"
   s.require_paths = ["lib"]
 
