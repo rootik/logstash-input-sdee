@@ -345,6 +345,7 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
     @remaining = rem.text.to_i if rem
     # We use own XML parsing to keep things simple to the user
     xml.elements.each("*/env:Body/sd:events/sd:evIdsAlert") do |element| 
+    puts element
       events[element.attributes["eventId"]] = {
         "@timestamp" => Time.at(REXML::XPath.first(element,"./sd:time").text.to_i/10**9).iso8601,
         "timezone" => REXML::XPath.first(element,"./sd:time").attributes["timeZone"],
@@ -363,9 +364,23 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
         "subsig_id" => REXML::XPath.first(element,"./sd:signature/cid:subsigId").text,
         "sig_details" => REXML::XPath.first(element,"./sd:signature/cid:sigDetails").text,
         "interface_group" => REXML::XPath.first(element,"./sd:interfaceGroup").text,
-        "vlan" => REXML::XPath.first(element,"./sd:vlan").text
+        "vlan" => REXML::XPath.first(element,"./sd:vlan").text,
+        "attacker_addr" => REXML::XPath.first(element,"./sd:participants/sd:attacker/sd:addr").text,
+        "attacker_locality" => REXML::XPath.first(element,"./sd:participants/sd:attacker/sd:addr").attributes["locality"],
+        "target_addr" => REXML::XPath.first(element,"./sd:participants/sd:target/sd:addr").text,
+        "target_os_source" => REXML::XPath.first(element,"./sd:participants/sd:target/cid:os").attributes["idSource"],
+        "target_os_type" => REXML::XPath.first(element,"./sd:participants/sd:target/cid:os").attributes["type"],
+        "target_os_relevance" => REXML::XPath.first(element,"./sd:participants/sd:target/cid:os").attributes["relevance"],
+        # Need? to parse <cid:summary cid:final='true' cid:initialAlert='6824288769384' cid:summaryType='Regular'>2</cid:summary>
+        "alert_details" => REXML::XPath.first(element,"./cid:alertDetails").text.tr('\\"', '\''),
+        "risk_rating" => REXML::XPath.first(element,"./cid:riskRatingValue").text,
+        "risk_target" => REXML::XPath.first(element,"./cid:riskRatingValue").attributes["targetValueRating"],
+        "risk_attacker" => REXML::XPath.first(element,"./cid:riskRatingValue").attributes["attackRelevanceRating"],
+        "threat_rating" => REXML::XPath.first(element,"./cid:threatRatingValue").text,
+        "interface" => REXML::XPath.first(element,"./cid:interface").text
         }
-    end
-    events
+        events[element.attributes["eventId"]].merge!("attacker_port" => REXML::XPath.first(element,"./sd:participants/sd:attacker/sd:port").text) if REXML::XPath.first(element,"./sd:participants/sd:attacker/sd:port")
+        events[element.attributes["eventId"]].merge!("target_port" => REXML::XPath.first(element,"./sd:participants/sd:target/sd:port").text) if REXML::XPath.first(element,"./sd:participants/sd:target/sd:port")
+      end    
   end
 end

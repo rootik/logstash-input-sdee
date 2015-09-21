@@ -74,25 +74,38 @@ Now you should see output like this:
 
 ```ruby
 {
-         "@timestamp" => "2015-09-21T08:04:10+03:00",
-           "timezone" => "EEST",
-          "tz_offset" => "180",
-           "event_id" => "6824288768048",
-           "severity" => "informational",
-             "vendor" => "Cisco",
-            "host_id" => "sensor1",
-           "app_name" => "sensorApp",
-    "app_instance_id" => "26957",
-        "description" => "ICMP Echo Reply",
-             "sig_id" => "2000",
-        "sig_version" => "S666",
-           "sig_type" => "other",
-        "sig_created" => "20001127",
-          "subsig_id" => "0",
-        "sig_details" => "ICMP Echo Reply",
-    "interface_group" => "vs0",
-               "vlan" => "0"
+             "@timestamp" => "2015-09-21T11:57:22+03:00",
+               "timezone" => "EEST",
+              "tz_offset" => "180",
+               "event_id" => "6824288770477",
+               "severity" => "informational",
+                 "vendor" => "Cisco",
+                "host_id" => "sensor1",
+               "app_name" => "sensorApp",
+        "app_instance_id" => "26957",
+            "description" => "ICMP Echo Reply",
+                 "sig_id" => "2000",
+            "sig_version" => "S666",
+               "sig_type" => "other",
+            "sig_created" => "20001127",
+              "subsig_id" => "0",
+            "sig_details" => "ICMP Echo Reply",
+        "interface_group" => "vs0",
+                   "vlan" => "0",
+          "attacker_addr" => "10.0.0.1",
+      "attacker_locality" => "OUT",
+            "target_addr" => "10.0.1.1",
+       "target_os_source" => "unknown",
+         "target_os_type" => "unknown",
+    "target_os_relevance" => "relevant",
+          "alert_details" => "InterfaceAttributes:  context='single_vf' physical='Unknown' backplane='PortChannel0/0' ; Regular Summary: 2 events this interval ; ",
+            "risk_rating" => "35",
+            "risk_target" => "medium",
+          "risk_attacker" => "relevant",
+          "threat_rating" => "35",
+              "interface" => "PortChannel0/0"
 }
+
 ```
 
 #### 2.2 Run in an installed Logstash
@@ -100,7 +113,7 @@ Now you should see output like this:
 You can use the same **2.1** method to run your plugin in an installed Logstash by editing its `Gemfile` and pointing the `:path` to your local plugin development directory or you can build the gem and install it using:
 
 - Build your plugin gem
-```sh
+```ruby
 gem build logstash-filter-awesome.gemspec
 ```
 - Install the plugin from the Logstash home
@@ -118,3 +131,6 @@ Programming is not a required skill. Whatever you've seen about open source and 
 It is more important to the community that you are able to contribute.
 
 For more information about contributing, see the [CONTRIBUTING](https://github.com/elasticsearch/logstash/blob/master/CONTRIBUTING.md) file.
+
+## Reference
+[Cisco Intrusion Detection Event Exchange (CIDEE) Specification](http://www.cisco.com/c/en/us/td/docs/security/ips/specs/CIDEE_Specification.html)
