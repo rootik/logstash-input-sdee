@@ -69,6 +69,32 @@ bin/logstash -e 'input {sdee { interval => 60 http => { url => "http://ciscoips"
 ```
 At this point any modifications to the plugin code will be applied to this local Logstash setup. After modifying the plugin, simply rerun Logstash.
 
+Enable signature 2000 (ICMP Echo Reply) on your Cisco IPS device.
+Now you should see output like this:
+
+```ruby
+{
+         "@timestamp" => "2015-09-21T08:04:10+03:00",
+           "timezone" => "EEST",
+          "tz_offset" => "180",
+           "event_id" => "6824288768048",
+           "severity" => "informational",
+             "vendor" => "Cisco",
+            "host_id" => "sensor1",
+           "app_name" => "sensorApp",
+    "app_instance_id" => "26957",
+        "description" => "ICMP Echo Reply",
+             "sig_id" => "2000",
+        "sig_version" => "S666",
+           "sig_type" => "other",
+        "sig_created" => "20001127",
+          "subsig_id" => "0",
+        "sig_details" => "ICMP Echo Reply",
+    "interface_group" => "vs0",
+               "vlan" => "0"
+}
+```
+
 #### 2.2 Run in an installed Logstash
 
 You can use the same **2.1** method to run your plugin in an installed Logstash by editing its `Gemfile` and pointing the `:path` to your local plugin development directory or you can build the gem and install it using:
