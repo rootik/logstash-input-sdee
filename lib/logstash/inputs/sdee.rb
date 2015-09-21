@@ -346,12 +346,14 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
     # We use own XML parsing to keep things simple to the user
     xml.elements.each("*/env:Body/sd:events/sd:evIdsAlert") do |element|
       eid =  element.attributes["eventId"]
-      events[eid] = {      
-        "@timestamp" => Time.at(REXML::XPath.first(element,"./sd:time").text.to_i/10**9).iso8601,
+      # Get timestamp in nsec from sensor
+      timestamp=REXML::XPath.first(element,"./sd:time").text.to_i(10)
+      events[eid] = {
+        "@timestamp" => Time.at(timestamp/10**9,((timestamp%10**9)/1000).to_f).iso8601(3),
         "timezone" => REXML::XPath.first(element,"./sd:time").attributes["timeZone"],
         "tz_offset" => REXML::XPath.first(element,"./sd:time").attributes["offset"],
-        "event_id" => element.attributes["eventId"].to_s,
-        "severity" => element.attributes["severity"].to_s,
+        "event_id" => eid.to_s,
+        "severity" => element.attributes["severity"].to_s.capitalize,
         "vendor" => element.attributes["vendor"].to_s,
         "host_id" => REXML::XPath.first(element,"./sd:originator/sd:hostId").text,
         "app_name" => REXML::XPath.first(element,"./sd:originator/cid:appName").text,
@@ -379,11 +381,11 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
         "threat_rating" => REXML::XPath.first(element,"./cid:threatRatingValue").text,
         "interface" => REXML::XPath.first(element,"./cid:interface").text,
         "host" => URI.parse(@http["url"]).host,
+        "device" => "IPS",
         "tags" => "SDEE"
         }
-        events[element.attributes["eventId"]].merge!({"attacker_port" => REXML::XPath.first(element,"./sd:participants/sd:attacker/sd:port").text}) if REXML::XPath.first(element,"./sd:participants/sd:attacker/sd:port")
-        events[element.attributes["eventId"]].merge!({"target_port" => REXML::XPath.first(element,"./sd:participants/sd:target/sd:port").text}) if REXML::XPath.first(element,"./sd:participants/sd:target/sd:port")
-        message = events[eid]
+        events[eid].merge!({"attacker_port" => REXML::XPath.first(element,"./sd:participants/sd:attacker/sd:port").text}) if REXML::XPath.first(element,"./sd:participants/sd:attacker/sd:port")
+        events[eid].merge!({"target_port" => REXML::XPath.first(element,"./sd:participants/sd:target/sd:port").text}) if REXML::XPath.first(element,"./sd:participants/sd:target/sd:port")
         events[eid].merge!({"message" => "IdsAlert: '#{events[eid]["description"]}' Attacker: '#{events[eid]["attacker_addr"]}' Target: '#{events[eid]["target_addr"]}' SigId: '#{events[eid]["sig_id"]}'"})
       end
       events 

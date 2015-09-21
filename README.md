@@ -13,7 +13,7 @@ It is fully free and fully open source. The license is Apache 2.0, meaning you a
 
 ## Config Example
 
-For config examples see `sdee.rb` in `lib/logstash/inputs/` in this repo.
+For config examples see `sdee.conf` in `examples` in this repo.
 
 ## Documentation
 
@@ -60,7 +60,7 @@ bundle exec rspec
 
 - Edit Logstash `Gemfile` and add the local plugin path, for example:
 ```ruby
-gem "logstash-filter-awesome", :path => "/your/local/logstash-filter-awesome"
+gem "logstash-input-sdee", :path => "/your/local/logstash-input-sdee"
 ```
 - Install plugin
 ```sh
@@ -119,12 +119,12 @@ You should see output like this:
 You can use the same **2.1** method to run your plugin in an installed Logstash by editing its `Gemfile` and pointing the `:path` to your local plugin development directory or you can build the gem and install it using:
 
 - Build your plugin gem
-```ruby
-gem build logstash-filter-awesome.gemspec
+```sh
+gem build logstash-input-sdee.gemspec
 ```
 - Install the plugin from the Logstash home
 ```sh
-bin/plugin install /your/local/plugin/logstash-filter-awesome.gem
+bin/plugin install /your/local/plugin/logstash-input-sdee.gem
 ```
 - Start Logstash and proceed to test the plugin
 

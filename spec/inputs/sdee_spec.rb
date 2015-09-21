@@ -1,22 +1,25 @@
 require "logstash/devutils/rspec/spec_helper"
-require 'logstash/inputs/http_poller'
+require 'yaml'
+require 'logstash/inputs/sdee'
 require 'flores/random'
 
 describe LogStash::Inputs::SDEE do
-  let(:metadata_target) { "_sdee_metadata" }
+  let(:metadata_target) { "@metadata" }
   let(:queue) { Queue.new }
   let(:default_interval) { 60 }
-  let(:default_url) { "http://localhost:1827" }
-  let(:default_urls) {
+  let(:default_http) {
     {
-      default_name => default_url
+      "url" => "http://localhost"
+      auth => {
+        usrer => "cisco"
+        password => "p@ssw0rd"
+      }
     }
   }
   let(:default_opts) {
     {
       "interval" => default_interval,
-      "urls" => default_urls,
-      "codec" => "json",
+      "http" => default_http,
       "metadata_target" => metadata_target
     }
   }
