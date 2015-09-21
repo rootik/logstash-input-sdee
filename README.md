@@ -65,7 +65,7 @@ bin/plugin install --no-verify
 ```
 - Run Logstash with your plugin
 ```sh
-bin/logstash -e 'filter {awesome {}}'
+bin/logstash -e 'input {sdee { interval => 60 http => { url => "http://ciscoips" auth => {user => "cisco" password => "p@ssw0rd"}} session_file => "/tmp/session.db" }}'
 ```
 At this point any modifications to the plugin code will be applied to this local Logstash setup. After modifying the plugin, simply rerun Logstash.
 

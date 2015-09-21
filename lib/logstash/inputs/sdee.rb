@@ -4,6 +4,7 @@ require "logstash/namespace"
 require "logstash/plugin_mixins/http_client"
 require "yaml"
 require "uri"
+require "time"
 require "rexml/document"
 require "socket" # for Socket.gethostname
 require "manticore"
@@ -47,7 +48,7 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
   include LogStash::PluginMixins::HttpClient
 
   config_name "sdee"
-
+  
   default :codec, "plain"
 
   # A Hash of urls in this format : "name" => "url"
@@ -64,28 +65,29 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
   # If you'd like to work with the request/response metadata
   # Set this value to the name of the field you'd like to store a nested
   # hash of metadata.
-  config :metadata_target, :validate => :string, :default => '@metadata'
+  config :metadata_target, :validate => :string
+  #, :default => '@metadata'
 
 
   # A local File to store CIDEE SubscriptionID and SessionID
   config :session_file, :validate => :string, :required => true
+  
 
+  
   public
   def register
     @host = Socket.gethostname.force_encoding(Encoding::UTF_8)
+    @remaining = 0
     setup_request!(@http)
-    if File.exist?(@session_file)
-      yaml = YAML.load_file(session_file)
-      if (defined?(yaml) && yaml != nil)
-        unsubscribe(@request,yaml)
-      end
-    end
+
     @logger.info("Registering SDEE Input", :type => @type,
                  :http => @http, :interval => @interval, :timeout => @timeout)
-    
+
+    #subscribe to SDEE and store session data
     @session = subscribe(@request)
-    File.open(@session_file, 'w') {|f| f.write @session.to_yaml }
+
     newurl = URI.join(@http["url"], "cgi-bin/sdee-server?subscriptionId=#{@session[:subscriptionid]}&confirm=yes&maxNbrOfEvents=150&timeout=5&sessionId=#{@session[:sessionid]}")
+
     @request[1] = newurl.to_s
     rescue StandardError, java.lang.Exception => e
      @logger.error? && @logger.error("SDEE subscription error!",
@@ -98,6 +100,14 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
 
   private
   def subscribe(request)
+    # recover from ungraceful shutdown first
+    if File.exist?(@session_file)
+      yaml = YAML.load_file(@session_file)
+      if (defined?(yaml) && yaml != nil)
+        unsubscribe(request,yaml)
+      end
+    end
+
     url = URI.join(@http["url"], "cgi-bin/sdee-server?action=open&evIdsAlert&force=yes")
     request[1] = url.to_s
     session = Hash.new
@@ -106,32 +116,35 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
       on_success {|response| session = handle_subscription(request, response)}.
       on_failure {|exception| http_error(request, exception)}
     client.execute!
+    raise LogStash::ConfigurationError, "Subscription Error! Check your configuration for host url,user,password." unless session
     session
   end
   
   private
   def handle_subscription(request, response)
-    body = response.body
+    body = response.body    
     xml = REXML::Document.new body.to_s
     session = Hash.new
-    sessionid = XPath.first(xml, "//sd:sessionId")
-    subscriptionid = XPath.first(xml, "//sd:subscriptionId")
-    session[:sessionid] = sessionid.text
-    session[:subscriptionid] = subscriptionid.text
+    sessionid = REXML::XPath.first(xml, "//sd:sessionId")
+    subscriptionid = REXML::XPath.first(xml, "//sd:subscriptionId")
+    session[:sessionid] = sessionid.text if sessionid
+    session[:subscriptionid] = subscriptionid.text if subscriptionid
+    File.open(@session_file, 'w') {|f| f.write session.to_yaml }
     session
   end
   
   private
   def http_error(request, exeption)
-      @logger.error? && @logger.error("Cannot read URL or send the error as an event!",
-                                      :request => structure_request(request),
-                                      :exception => exeption.to_s,
-                                      :exception_backtrace => exeption.backtrace
+      @logger.error? && @logger.error("Cannot read URL or send the error as an event! Check your configuration for host url,user,password.",
+                                        :request => structure_request(request),
+                                        :exception => exeption.to_s,
+                                        :exception_backtrace => exeption.backtrace    
       )
   end
 
   private
   def unsubscribe(request,session)
+    #unsubscribe and remove session data file
     url = URI.join(@http["url"], "cgi-bin/sdee-server?action=close&subscriptionId=#{session[:subscriptionid]}&sessionId=#{session[:sessionid]}")
     request[1] = url.to_s
     method, *request_opts = request
@@ -199,7 +212,9 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
     while true
       begin
         Stud.interval(@interval) do
-          run_once(queue)      
+          begin
+            run_once(queue)
+          end while (@remaining > 0)
         end
       rescue EOFError, LogStash::ShutdownSignal
         break
@@ -209,7 +224,7 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
 
   public
   def teardown
-    @logger.debug("SDEE shutting down.")
+    @logger.debug? && @logger.debug("SDEE shutting down")
     unsubscribe(@request,@session) rescue nil
     finished
   end # def teardown
@@ -217,7 +232,6 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
   private
   def run_once(queue)
     request_async(queue, @request)
-    
     client.execute!
   end
 
@@ -235,21 +249,22 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
 
   private
   def handle_success(queue, request, response, execution_time)
-    @codec.decode(response.body) do |decoded|
-      event = @target ? LogStash::Event.new(@target => decoded.to_hash) : decoded
+    decode(response.body).each_pair do |id,decoded|
+      event = @target ? LogStash::Event.new(@target => decoded) : decoded
       handle_decoded_event(queue, request, response, event, execution_time)
     end
   end
 
   private
   def handle_decoded_event(queue, request, response, event, execution_time)
-    apply_metadata(event, request, response, execution_time)
+    apply_metadata(event, request, response, execution_time) if @metadata_target
     decorate(event)
     queue << event
   rescue StandardError, java.lang.Exception => e
     @logger.error? && @logger.error("Error eventifying response!",
                                     :exception => e,
                                     :exception_message => e.message,
+                                    :exeption_backtrace => e.backtrace,
                                     :url => request,
                                     :response => response
     )
@@ -261,11 +276,11 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
     event = LogStash::Event.new
     apply_metadata(event, request)
 
-    event.tag("_http_request_failure")
+    event.tag("_sdee_failure")
 
     # This is also in the metadata, but we send it anyone because we want this
     # persisted by default, whereas metadata isn't. People don't like mysterious errors
-    event["http_request_failure"] = {
+    event["sdee_failure"] = {
       "request" => structure_request(request),
       "error" => exception.to_s,
       "backtrace" => exception.backtrace,
@@ -303,7 +318,6 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
       m["response_message"] = response.message
       m["times_retried"] = response.times_retried
     end
-
     m
   end
 
@@ -316,5 +330,42 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
       "method" => method.to_s,
       "url" => url,
     }).map {|k,v| [k.to_s,v] }]
+  end
+  
+  private
+  def decode(body)
+    events = Hash.new    
+    xml = REXML::Document.new body.to_s
+    err = REXML::XPath.first(xml, "//env:Reason") if REXML::XPath.first(xml, "//env:Fault")
+    err = err.text.to_s if err
+    if err && err == "Subscription does not exist"
+        subscribe(@request)
+    end
+    rem = REXML::XPath.first(xml, "//sd:remaining-events")
+    @remaining = rem.text.to_i if rem
+    # We use own XML parsing to keep things simple to the user
+    xml.elements.each("*/env:Body/sd:events/sd:evIdsAlert") do |element| 
+      events[element.attributes["eventId"]] = {
+        "@timestamp" => Time.at(REXML::XPath.first(element,"./sd:time").text.to_i/10**9).iso8601,
+        "timezone" => REXML::XPath.first(element,"./sd:time").attributes["timeZone"],
+        "tz_offset" => REXML::XPath.first(element,"./sd:time").attributes["offset"],
+        "event_id" => element.attributes["eventId"].to_s,
+        "severity" => element.attributes["severity"].to_s,
+        "vendor" => element.attributes["vendor"].to_s,
+        "host_id" => REXML::XPath.first(element,"./sd:originator/sd:hostId").text,
+        "app_name" => REXML::XPath.first(element,"./sd:originator/cid:appName").text,
+        "app_instance_id" => REXML::XPath.first(element,"./sd:originator/cid:appInstanceId").text,
+        "description" => REXML::XPath.first(element,"./sd:signature").attributes["description"],
+        "sig_id" => REXML::XPath.first(element,"./sd:signature").attributes["id"],
+        "sig_version" => REXML::XPath.first(element,"./sd:signature").attributes["cid:version"],
+        "sig_type" => REXML::XPath.first(element,"./sd:signature").attributes["cid:type"],
+        "sig_created" => REXML::XPath.first(element,"./sd:signature").attributes["created"],
+        "subsig_id" => REXML::XPath.first(element,"./sd:signature/cid:subsigId").text,
+        "sig_details" => REXML::XPath.first(element,"./sd:signature/cid:sigDetails").text,
+        "interface_group" => REXML::XPath.first(element,"./sd:interfaceGroup").text,
+        "vlan" => REXML::XPath.first(element,"./sd:vlan").text
+        }
+    end
+    events
   end
 end
