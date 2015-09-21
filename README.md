@@ -10,6 +10,7 @@ It is fully free and fully open source. The license is Apache 2.0, meaning you a
 
 ## TODO
 - Add request options like minThreatRating and maxThreatRating, virtualSensors, errorSeverities, includeStatusCategories, excludeStatusCategories and so on.
+- Gather sensor status and health events
 
 ## Config Example
 
@@ -107,7 +108,7 @@ You should see output like this:
           "risk_attacker" => "relevant",
           "threat_rating" => "35",
               "interface" => "PortChannel0/0",
-                   "host" => "10.0.2.55",
+                   "host" => "10.0.2.1",
                    "tags" => "SDEE",
                 "message" => "IdsAlert: 'ICMP Echo Reply' Attacker: '10.0.0.1' Target: '10.0.1.1' SigId: '2000'",
                "@version" => "1"
