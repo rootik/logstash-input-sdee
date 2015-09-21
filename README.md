@@ -8,6 +8,9 @@ The idea behind this plugins came from a need to gather events from Cisco securi
 
 It is fully free and fully open source. The license is Apache 2.0, meaning you are pretty much free to use it however you want in whatever way.
 
+## TODO
+- Add request options like minThreatRating and maxThreatRating, virtualSensors, errorSeverities, includeStatusCategories, excludeStatusCategories and so on.
+
 ## Config Example
 
 For config examples see `sdee.rb` in `lib/logstash/inputs/` in this repo.

@@ -378,8 +378,9 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
         "threat_rating" => REXML::XPath.first(element,"./cid:threatRatingValue").text,
         "interface" => REXML::XPath.first(element,"./cid:interface").text
         }
-        events[element.attributes["eventId"]].merge!("attacker_port" => REXML::XPath.first(element,"./sd:participants/sd:attacker/sd:port").text) if REXML::XPath.first(element,"./sd:participants/sd:attacker/sd:port")
-        events[element.attributes["eventId"]].merge!("target_port" => REXML::XPath.first(element,"./sd:participants/sd:target/sd:port").text) if REXML::XPath.first(element,"./sd:participants/sd:target/sd:port")
-      end    
+        events[element.attributes["eventId"]].merge!({"attacker_port" => REXML::XPath.first(element,"./sd:participants/sd:attacker/sd:port").text}) if REXML::XPath.first(element,"./sd:participants/sd:attacker/sd:port")
+        events[element.attributes["eventId"]].merge!({"target_port" => REXML::XPath.first(element,"./sd:participants/sd:target/sd:port").text}) if REXML::XPath.first(element,"./sd:participants/sd:target/sd:port")
+      end
+      events 
   end
 end
