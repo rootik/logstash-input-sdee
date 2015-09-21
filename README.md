@@ -109,7 +109,7 @@ You should see output like this:
               "interface" => "PortChannel0/0",
                    "host" => "10.0.2.55",
                    "tags" => "SDEE",
-                "message" => "IdsAlert: ICMP Echo Reply Attacker: 10.0.0.1 Target: 10.0.1.1 SigId: ICMP Echo Reply",
+                "message" => "IdsAlert: 'ICMP Echo Reply' Attacker: '10.0.0.1' Target: '10.0.1.1' SigId: '2000'",
                "@version" => "1"
 }
 ```

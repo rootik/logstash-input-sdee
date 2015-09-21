@@ -384,7 +384,7 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
         events[element.attributes["eventId"]].merge!({"attacker_port" => REXML::XPath.first(element,"./sd:participants/sd:attacker/sd:port").text}) if REXML::XPath.first(element,"./sd:participants/sd:attacker/sd:port")
         events[element.attributes["eventId"]].merge!({"target_port" => REXML::XPath.first(element,"./sd:participants/sd:target/sd:port").text}) if REXML::XPath.first(element,"./sd:participants/sd:target/sd:port")
         message = events[eid]
-        events[eid].merge!({"message" => "IdsAlert: #{events[eid]["description"]} Attacker: #{events[eid]["attacker_addr"]} Target: #{events[eid]["target_addr"]} SigId: #{events[eid]["sig_id"]}"})
+        events[eid].merge!({"message" => "IdsAlert: '#{events[eid]["description"]}' Attacker: '#{events[eid]["attacker_addr"]}' Target: '#{events[eid]["target_addr"]}' SigId: '#{events[eid]["sig_id"]}'"})
       end
       events 
   end
