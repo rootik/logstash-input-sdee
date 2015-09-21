@@ -345,7 +345,6 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
     @remaining = rem.text.to_i if rem
     # We use own XML parsing to keep things simple to the user
     xml.elements.each("*/env:Body/sd:events/sd:evIdsAlert") do |element| 
-    puts element
       events[element.attributes["eventId"]] = {
         "@timestamp" => Time.at(REXML::XPath.first(element,"./sd:time").text.to_i/10**9).iso8601,
         "timezone" => REXML::XPath.first(element,"./sd:time").attributes["timeZone"],
