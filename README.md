@@ -72,15 +72,15 @@ bin/logstash -e 'input {sdee { interval => 60 http => { url => "http://ciscoips"
 ```
 At this point any modifications to the plugin code will be applied to this local Logstash setup. After modifying the plugin, simply rerun Logstash.
 
-Enable signature 2000 (ICMP Echo Reply) on your Cisco IPS device.
-Now you should see output like this:
+Enable signature 2000 (ICMP Echo Reply) on your Cisco IPS device and ping some host on a network, monitored by IPS.
+You should see output like this:
 
 ```ruby
 {
-             "@timestamp" => "2015-09-21T11:57:22+03:00",
+             "@timestamp" => "2015-09-21T12:21:26.000Z",
                "timezone" => "EEST",
               "tz_offset" => "180",
-               "event_id" => "6824288770477",
+               "event_id" => "6824288790867",
                "severity" => "informational",
                  "vendor" => "Cisco",
                 "host_id" => "sensor1",
@@ -98,17 +98,20 @@ Now you should see output like this:
           "attacker_addr" => "10.0.0.1",
       "attacker_locality" => "OUT",
             "target_addr" => "10.0.1.1",
-       "target_os_source" => "unknown",
-         "target_os_type" => "unknown",
+       "target_os_source" => "learned",
+         "target_os_type" => "windows-nt-2k-xp",
     "target_os_relevance" => "relevant",
-          "alert_details" => "InterfaceAttributes:  context='single_vf' physical='Unknown' backplane='PortChannel0/0' ; Regular Summary: 2 events this interval ; ",
+          "alert_details" => "InterfaceAttributes:  context='single_vf' physical='Unknown' backplane='PortChannel0/0' ; ",
             "risk_rating" => "35",
             "risk_target" => "medium",
           "risk_attacker" => "relevant",
           "threat_rating" => "35",
-              "interface" => "PortChannel0/0"
+              "interface" => "PortChannel0/0",
+                   "host" => "10.0.2.55",
+                   "tags" => "SDEE",
+                "message" => "IdsAlert: ICMP Echo Reply Attacker: 10.0.0.1 Target: 10.0.1.1 SigId: ICMP Echo Reply",
+               "@version" => "1"
 }
-
 ```
 
 #### 2.2 Run in an installed Logstash

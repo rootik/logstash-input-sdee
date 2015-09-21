@@ -65,7 +65,7 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
   # If you'd like to work with the request/response metadata
   # Set this value to the name of the field you'd like to store a nested
   # hash of metadata.
-  config :metadata_target, :validate => :string
+  config :metadata_target, :validate => :string, :default => '@metadata'
   #, :default => '@metadata'
 
 
@@ -250,7 +250,7 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
   private
   def handle_success(queue, request, response, execution_time)
     decode(response.body).each_pair do |id,decoded|
-      event = @target ? LogStash::Event.new(@target => decoded) : decoded
+      event = LogStash::Event.new(decoded)
       handle_decoded_event(queue, request, response, event, execution_time)
     end
   end
@@ -299,7 +299,7 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
 
   private
   def apply_metadata(event, request, response=nil, execution_time=nil)
-    return unless @metadata_target
+    #return unless @metadata_target
     event[@metadata_target] = event_metadata(request, response, execution_time)
   end
 
@@ -344,8 +344,9 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
     rem = REXML::XPath.first(xml, "//sd:remaining-events")
     @remaining = rem.text.to_i if rem
     # We use own XML parsing to keep things simple to the user
-    xml.elements.each("*/env:Body/sd:events/sd:evIdsAlert") do |element| 
-      events[element.attributes["eventId"]] = {
+    xml.elements.each("*/env:Body/sd:events/sd:evIdsAlert") do |element|
+      eid =  element.attributes["eventId"]
+      events[eid] = {      
         "@timestamp" => Time.at(REXML::XPath.first(element,"./sd:time").text.to_i/10**9).iso8601,
         "timezone" => REXML::XPath.first(element,"./sd:time").attributes["timeZone"],
         "tz_offset" => REXML::XPath.first(element,"./sd:time").attributes["offset"],
@@ -376,10 +377,14 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
         "risk_target" => REXML::XPath.first(element,"./cid:riskRatingValue").attributes["targetValueRating"],
         "risk_attacker" => REXML::XPath.first(element,"./cid:riskRatingValue").attributes["attackRelevanceRating"],
         "threat_rating" => REXML::XPath.first(element,"./cid:threatRatingValue").text,
-        "interface" => REXML::XPath.first(element,"./cid:interface").text
+        "interface" => REXML::XPath.first(element,"./cid:interface").text,
+        "host" => URI.parse(@http["url"]).host,
+        "tags" => "SDEE"
         }
         events[element.attributes["eventId"]].merge!({"attacker_port" => REXML::XPath.first(element,"./sd:participants/sd:attacker/sd:port").text}) if REXML::XPath.first(element,"./sd:participants/sd:attacker/sd:port")
         events[element.attributes["eventId"]].merge!({"target_port" => REXML::XPath.first(element,"./sd:participants/sd:target/sd:port").text}) if REXML::XPath.first(element,"./sd:participants/sd:target/sd:port")
+        message = events[eid]
+        events[eid].merge!({"message" => "IdsAlert: #{events[eid]["description"]} Attacker: #{events[eid]["attacker_addr"]} Target: #{events[eid]["target_addr"]} SigId: #{events[eid]["sig_id"]}"})
       end
       events 
   end
