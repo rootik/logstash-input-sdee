@@ -331,6 +331,7 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
         "attacker_addr" => REXML::XPath.first(element,"./sd:participants/sd:attacker/sd:addr").text,
         "attacker_locality" => REXML::XPath.first(element,"./sd:participants/sd:attacker/sd:addr").attributes["locality"],
         "target_addr" => REXML::XPath.first(element,"./sd:participants/sd:target/sd:addr").text,
+        "targed_locality" => REXML::XPath.first(element,"./sd:participants/sd:target/sd:addr").attributes["locality"],
         "target_os_source" => REXML::XPath.first(element,"./sd:participants/sd:target/cid:os").attributes["idSource"],
         "target_os_type" => REXML::XPath.first(element,"./sd:participants/sd:target/cid:os").attributes["type"],
         "target_os_relevance" => REXML::XPath.first(element,"./sd:participants/sd:target/cid:os").attributes["relevance"],
