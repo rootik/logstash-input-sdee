@@ -4,6 +4,7 @@ require "logstash/namespace"
 require "logstash/plugin_mixins/http_client"
 require "yaml"
 require "uri"
+require "pathname"
 require "time"
 require "rexml/document"
 require "socket" # for Socket.gethostname
@@ -70,13 +71,14 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
 
 
   # A local File to store CIDEE SubscriptionID and SessionID
-  config :session_file, :validate => :string, :required => true
+  config :session_path, :validate => :string, :default => '/tmp'
   
 
   
   public
   def register
     @host = Socket.gethostname.force_encoding(Encoding::UTF_8)
+    @session_file = Pathname.new(@session_path) + "temp#{URI.parse(@http["url"]).host}.db"
     @remaining = 0
     setup_request!(@http)
 
@@ -101,7 +103,7 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
   private
   def subscribe(request)
     # recover from ungraceful shutdown first
-    if File.exist?(@session_file)
+    if @session_file.exist?
       yaml = YAML.load_file(@session_file)
       if (defined?(yaml) && yaml != nil)
         unsubscribe(request,yaml)
@@ -129,7 +131,7 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
     subscriptionid = REXML::XPath.first(xml, "//sd:subscriptionId")
     session[:sessionid] = sessionid.text if sessionid
     session[:subscriptionid] = subscriptionid.text if subscriptionid
-    File.open(@session_file, 'w') {|f| f.write session.to_yaml }
+    File.open(@session_file, 'w') {|f| f.write session.to_yaml}
     session
   end
   
@@ -156,8 +158,8 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
   
   private
   def remove_session
-    if File.exist?(@session_file) 
-     File.delete(@session_file)
+    if @session_file.exist?
+      @session_file.unlink
     end
   end
 
