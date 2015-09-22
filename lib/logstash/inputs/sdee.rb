@@ -168,7 +168,6 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
 
       # We need these strings to be keywords!
       spec[:auth] = {user: spec[:auth]["user"], pass: spec[:auth]["password"]} if spec[:auth]
-
       res = [method, url, spec]
     else
       raise LogStash::ConfigurationError, "Invalid request spec: '#{http}', expected a Hash!"
