@@ -16,6 +16,47 @@ It is fully free and fully open source. The license is Apache 2.0, meaning you a
 
 For config examples see `sdee.conf` in `examples` in this repo.
 
+## SSL notes
+
+You need to import host SSL certificate in Java trust store to be able to connect to Cisco IPS device.
+I have had no luck with `truststore` nor `ssl_certificate_validation` configuration options with Java 1.8.0-60 like mentioned in [logstash-mixin-http_client](https://github.com/logstash-plugins/logstash-mixin-http_client) documentation,
+so I'm using system trustStore - `$JAVA_HOME/lib/security/cacerts`. Note, default Java trustStore password is `changeit`.
+Take the following steps:
+
+* Get server certificate from IPS device:
+```sh
+echo | openssl s_client -connect ciscoips:443 2>&1 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > cert.pem
+```
+
+* Import it into Java cacerts:
+```sh
+$JAVA_HOME/bin/keytool -keystore $JAVA_HOME/lib/security/cacerts -importcert -alias ciscoips -file cert.pem
+```
+
+* Verify if import was successful:
+```sh
+$JAVA_HOME/bin/keytool -keystore $JAVA_HOME/lib/security/cacerts -list
+```
+
+* Modify your logstash input config for SSL connection:
+```ruby
+input {
+  sdee { 
+    interval => 60  
+    http => { 
+      truststore_password => "changeit" 
+      url => "https://10.0.2.1"  
+      auth => {
+        user => "cisco"
+        password => "p@ssw0rd"
+      }
+    }
+  }
+}
+```
+
+* Test logstash
+
 ## Documentation
 
 Logstash provides infrastructure to automatically generate documentation for this plugin. We use the asciidoc format to write documentation so any comments in the source code will be first converted into asciidoc and then into html. All plugin documentation are placed under one [central location](http://www.elasticsearch.org/guide/en/logstash/current/).
