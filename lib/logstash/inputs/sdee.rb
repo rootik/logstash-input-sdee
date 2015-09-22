@@ -11,40 +11,12 @@ require "socket" # for Socket.gethostname
 require "manticore"
 include REXML
 
-# Note. This plugin is a WIP! Things will change and break!
-#
-# The config should look like this:
-#
-# input {
-#   sdee {
-#     type => "sdee"
-#     # Supports all options supported by ruby's Manticore HTTP client
-#     http {
-#       url => "http://ciscoips"
-#       auth => {
-#         user => "cisco"
-#         password => "p@ssw0rd"
-#       }
-#     }
-#     session_path => "/tmp"
-#     interval => 60
-#     # A hash of request metadata info (timing, response headers, etc.) will be sent here
-#     metadata_target => "@metadata"
-#   }
-# }
-#
-# output {
-#   stdout {
-#     codec => rubydebug
-#   }
-# }
-
 class LogStash::Inputs::SDEE < LogStash::Inputs::Base
   include LogStash::PluginMixins::HttpClient
 
   config_name "sdee"
-  
-  default :codec, "plain"
+  # Do we really need a codec?
+  # default :codec, "plain"
 
   # A Hash of urls in this format : "name" => "url"
   # The name and the url will be passed in the outputed event

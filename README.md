@@ -2,11 +2,15 @@
 
 This plugin is based off [logstash-input-http_poller](https://github.com/logstash-plugins/logstash-input-http_poller) by @maximede.
 
-This [Logstash](https://github.com/elasticsearch/logstash) input plugin allows you to call an Cisco SDEE/CIDEE HTTP API, decode the output of it into event(s), and send them on their merry way.
+This [Logstash](https://github.com/elasticsearch/logstash) input plugin allows you to call a Cisco SDEE/CIDEE HTTP API, decode the output of it into event(s), and send them on their merry way.
 
 The idea behind this plugins came from a need to gather events from Cisco security devices and feed them to ELK stack.
 
-The plugin is tested with Cisco ASA 5585-X IPS SSP-10.
+This plugin is tested on:
+* Hardware: Cisco ASA 5585-X IPS SSP-10
+* IPS Version: 7.3(2)E4
+* logstash 2.0.0-beta1
+* Java JRE 1.8.0-60
 
 It is fully free and fully open source. The license is Apache 2.0, meaning you are pretty much free to use it however you want in whatever way.
 
