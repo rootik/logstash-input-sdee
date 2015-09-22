@@ -13,29 +13,23 @@ include REXML
 
 # Note. This plugin is a WIP! Things will change and break!
 #
-# Reads from a list of urls and decodes the body of the response with a codec
 # The config should look like this:
 #
 # input {
 #   sdee {
+#     type => "sdee"
 #     # Supports all options supported by ruby's Manticore HTTP client
 #     http {
-#       method => get
 #       url => "http://ciscoips"
-#       headers => {
-#         Accept => "text/xml"
-#       }
 #       auth => {
 #         user => "cisco"
 #         password => "p@ssw0rd"
 #       }
-#     request_timeout => 60
 #     }
-#     session_file => "/var/lib/elasticsearch/session.db"
+#     session_path => "/tmp"
 #     interval => 60
-#     codec => "plain"
 #     # A hash of request metadata info (timing, response headers, etc.) will be sent here
-#     metadata_target => "_sdee_metadata"
+#     metadata_target => "@metadata"
 #   }
 # }
 #
@@ -60,20 +54,14 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
   # How often  (in seconds) the urls will be called
   config :interval, :validate => :number, :required => true
 
-  # Define the target field for placing the received data. If this setting is omitted, the data will be stored at the root (top level) of the event.
-  config :target, :validate => :string
-
   # If you'd like to work with the request/response metadata
   # Set this value to the name of the field you'd like to store a nested
   # hash of metadata.
   config :metadata_target, :validate => :string, :default => '@metadata'
   #, :default => '@metadata'
 
-
-  # A local File to store CIDEE SubscriptionID and SessionID
+  # A path to store tempfile with SDEE SubscriptionID and SessionID
   config :session_path, :validate => :string, :default => '/tmp'
-  
-
   
   public
   def register
@@ -118,7 +106,7 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
       on_success {|response| session = handle_subscription(request, response)}.
       on_failure {|exception| http_error(request, exception)}
     client.execute!
-    raise LogStash::ConfigurationError, "Subscription Error! Check your configuration for host url,user,password." unless session
+    raise LogStash::ConfigurationError, "SDEE subscription Error! Check your configuration for host url,user,password." unless session
     session
   end
   
