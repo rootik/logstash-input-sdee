@@ -1,4 +1,5 @@
 # Logstash Cisco SDEE/CIDEE input plugin
+[![Gem Version](https://badge.fury.io/rb/logstash-input-sdee.svg)](https://badge.fury.io/rb/logstash-input-sdee)
 
 This plugin is based off [logstash-input-http_poller](https://github.com/logstash-plugins/logstash-input-http_poller) by @maximede.
 

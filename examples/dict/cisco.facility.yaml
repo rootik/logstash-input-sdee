@@ -1,0 +1,82 @@
+AUTHMGR: Authentication manager
+ACLMGR: ACL manager
+BACKUP_INTERFACE: Flex Links
+BADTRANSCEIVER: Defective transceiver
+BSPATCH: Boot loader patch
+CFGMGR: Configuration manager
+CLS_ACC: Consoleless access
+CMP: Cluster Membership Protocol
+DHCP_SNOOPING: DHCP snooping
+DOT1X: 802.1x
+DOT1X_SWITCH: 802.1x for switches
+DTP: Dynamic Trunking Protocol
+DWL: Down-when-looped
+EC: EtherChannel
+ENVIRONMENT: Environment Messages
+EPM: Enforcement Policy Module
+ETHCNTR: Ethernet controller
+EXPRESS_SETUP: Express Setup
+FRNTEND_CTRLR: Front-end controller
+GBIC_SECURITY: GBIC and SFP module security
+GBIC_SECURITY_CRYPT: GBIC and SFP module security
+GBIC_SECURITY_UNIQUE: GBIC and SFP module security
+HARDWARE: Hardware
+LFM: Local forwarding manager
+HPSECURE: Port security
+HULC_LICENSE: Licensing
+IFMGR: Interface manager
+IGMP_QUERIER: IGMP querier
+ILET: Cisco IOS License Enforcement Test
+ILPOWER: PoE
+IMAGEMGR: Image manager
+IP: Internet Protocol
+IP_DEVICE_TRACKING: IP device tracking
+KEYMAN: Keyman Messages
+MAC_MOVE: Host activity
+PAGP: Port Aggregation Protocol
+PHY: PHY
+PIMSN: PIM snooping
+PLATFORM: Low-level platform-specific
+PLATFORM_SM10G: Platform FRULink 10G Service Module
+PLATFORM_ENV: Platform environment
+PLATFORM_FBM: Platform fallback bridging manager
+PLATFORM_HCEF: Cisco Express Forwarding
+PLATFORM_HPLM: Platform pseudo-label manager
+PLATFORM_IPC: Platform Interprocess Communication Protocol
+PLATFORM_IPv6_UCAST: IP Version 6 Unicast
+PLATFORM_PBR: Platform policy-based routing
+PLATFORM_PM: Platform port manager
+PLATFORM_RPC: Platform remote procedure call
+PLATFORM_SPAN: Platform switched port analyzer
+PLATFORM_STACKPOWER: Platform stack power
+PLATFORM_UCAST: Platform unicast routing
+PLATFORM_VLAN: Platform VLAN
+PLATFORM_WCCP: Platform WCCP
+PM: Port manager
+PORT_SECURITY: Port security
+POWERNET_ISSU: EnergyWise domain
+PT: Protocol tunneling
+QOSMGR: QoS manager
+RMON: Remote Network Monitoring (RMON)
+SCHED: Schedule
+SDM: Switch Database Manager
+SESA: SESA
+SPAN: Switched port analyzer
+SPANTREE: Spanning tree
+SPANTREE_FAST: Spanning-tree fast convergence
+SPANTREE_VLAN_SW: Spanning-tree VLAN switch
+STACKMGR: Stack manager
+STORM_CONTROL: Storm control
+SUPERVISOR: Supervisor ASIC
+SUPQ: Supervisor queue
+SW_DAI: Dynamic ARP inspection
+SW_MACAUTH: MAC address authentication
+SW_MATM: MAC address table manager
+SW_VLAN: VLAN manager
+SW_QOS_TB: QoS trusted boundary
+TCAMMGR: Ternary content addressable memory manager
+UDLD: UniDirectional Link Detection
+UFAST_MCAST_SW: UplinkFast packet transmission
+VLMAPLOG: VLAN Access Map Logs
+VQPCLIENT: VLAN Query Protocol client
+WCCP: WCCP

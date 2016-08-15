@@ -2,6 +2,7 @@
 require "logstash/inputs/base"
 require "logstash/namespace"
 require "logstash/plugin_mixins/http_client"
+
 require "yaml"
 require "uri"
 require "pathname"
@@ -34,7 +35,7 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
 
   # A path to store tempfile with SDEE SubscriptionID and SessionID
   config :session_path, :validate => :string, :default => '/tmp'
-  
+
   public
   def register
     @host = Socket.gethostname.force_encoding(Encoding::UTF_8)
@@ -81,10 +82,10 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
     raise LogStash::ConfigurationError, "SDEE subscription Error! Check your configuration for host url,user,password." unless session
     session
   end
-  
+
   private
   def handle_subscription(request, response)
-    body = response.body    
+    body = response.body
     xml = REXML::Document.new body.to_s
     session = Hash.new
     sessionid = REXML::XPath.first(xml, "//sd:sessionId")
@@ -94,13 +95,13 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
     File.open(@session_file, 'w') {|f| f.write session.to_yaml}
     session
   end
-  
+
   private
   def http_error(request, exeption)
       @logger.error? && @logger.error("Cannot read URL or send the error as an event! Check your configuration for host url,user,password.",
                                         :request => structure_request(request),
                                         :exception => exeption.to_s,
-                                        :exception_backtrace => exeption.backtrace    
+                                        :exception_backtrace => exeption.backtrace
       )
   end
 
@@ -115,7 +116,7 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
       on_failure {|exception| http_error(request, exception)}
     client.execute!
   end
-  
+
   private
   def remove_session
     if @session_file.exist?
@@ -152,8 +153,6 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
   private
   def validate_request!(http, request)
     method, url, spec = request
-
-    raise LogStash::ConfigurationError, "Invalid URL #{url}" unless URI::DEFAULT_PARSER.regexp[:ABS_URI].match(url)
 
     raise LogStash::ConfigurationError, "No URL provided for request! #{http}" unless url
     if spec && spec[:auth]
@@ -292,10 +291,10 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
       "url" => url,
     }).map {|k,v| [k.to_s,v] }]
   end
-  
+
   private
   def decode(body)
-    events = Hash.new    
+    events = Hash.new
     xml = REXML::Document.new body.to_s
     err = REXML::XPath.first(xml, "//env:Reason") if REXML::XPath.first(xml, "//env:Fault")
     err = err.text.to_s if err
@@ -350,6 +349,6 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
         events[eid].merge!({"target_port" => REXML::XPath.first(element,"./sd:participants/sd:target/sd:port").text}) if REXML::XPath.first(element,"./sd:participants/sd:target/sd:port")
         events[eid].merge!({"message" => "IdsAlert: '#{events[eid]["description"]}' Attacker: '#{events[eid]["attacker_addr"]}' Target: '#{events[eid]["target_addr"]}' SigId: '#{events[eid]["sig_id"]}'"})
       end
-      events 
+      events
   end
 end
