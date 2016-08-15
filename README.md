@@ -10,7 +10,7 @@ The idea behind this plugins came from a need to gather events from Cisco securi
 This plugin is tested on:
 * Hardware: Cisco ASA 5585-X IPS SSP-10
 * IPS Version: 7.3(2)E4
-* logstash 2.0.0-beta1
+* logstash 2.3.4
 * Java JRE 1.8.0-60
 
 It is fully free and fully open source. The license is Apache 2.0, meaning you are pretty much free to use it however you want in whatever way.
