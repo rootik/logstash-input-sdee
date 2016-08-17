@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = 'logstash-input-sdee'
-  s.version     = '0.7.2'
-  s.date        = '2016-08-14'
+  s.version     = '0.7.3'
+  s.date        = '2016-08-17'
   s.summary     = "Logstah SDEE input from Cisco ASA"
   s.description = "This Logstash input plugin allows you to call a Cisco SDEE/CIDEE HTTP API, decode the output of it into event(s), and send them on their merry way."
   s.authors     = ["rootik"]

@@ -176,10 +176,15 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
             run_once(queue)
           end while (@remaining > 0)
         end
-      rescue EOFError, LogStash::ShutdownSignal
+      rescue LogStash::ShutdownSignal
+        teardown
+        break
+      rescue IOError, EOFError
+        teardown
         break
       end
     end
+    finished
   end
 
   public
