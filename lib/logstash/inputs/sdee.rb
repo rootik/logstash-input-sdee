@@ -169,30 +169,19 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
 
   public
   def run(queue)
-    while true
+    while !stop?
       begin
-        Stud.interval(@interval) do
-          begin
-            run_once(queue)
-          end while (@remaining > 0)
-        end
-      rescue LogStash::ShutdownSignal
-        teardown
-        break
-      rescue IOError, EOFError
-        teardown
-        break
-      end
+        run_once(queue)
+      end while (@remaining > 0)
+      Stud.stoppable_sleep(@interval) { stop? } 
     end
-    finished
   end
 
   public
-  def teardown
+  def stop
     @logger.debug? && @logger.debug("SDEE shutting down")
     unsubscribe(@request,@session) rescue nil
-    finished
-  end # def teardown
+  end # def stop
 
   private
   def run_once(queue)

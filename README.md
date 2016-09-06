@@ -113,7 +113,7 @@ gem "logstash-input-sdee", :path => "/your/local/logstash-input-sdee"
 ```
 - Install plugin
 ```sh
-bin/plugin install --no-verify
+bin/logstash-plugin install --no-verify
 ```
 - Run Logstash with your plugin
 ```sh
@@ -173,7 +173,7 @@ gem build logstash-input-sdee.gemspec
 ```
 - Install the plugin from the Logstash home
 ```sh
-bin/plugin install /your/local/plugin/logstash-input-sdee.gem
+bin/logstash-plugin install /your/local/plugin/logstash-input-sdee.gem
 ```
 - Start Logstash and proceed to test the plugin
 
