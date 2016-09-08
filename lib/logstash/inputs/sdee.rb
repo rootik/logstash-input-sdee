@@ -172,7 +172,7 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
     while !stop?
       begin
         run_once(queue)
-      end while (@remaining > 0)
+      end while (@remaining > 0 || stop?)
       Stud.stoppable_sleep(@interval) { stop? } 
     end
   end
