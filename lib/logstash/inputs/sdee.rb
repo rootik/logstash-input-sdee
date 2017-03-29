@@ -234,12 +234,12 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
 
     # This is also in the metadata, but we send it anyone because we want this
     # persisted by default, whereas metadata isn't. People don't like mysterious errors
-    event.set("[sdee_failure]") = {
+    event.set("[sdee_failure]", {
       "request" => structure_request(request),
       "error" => exception.to_s,
       "backtrace" => exception.backtrace,
       "runtime_seconds" => execution_time
-   }
+    })
 
     queue << event
   rescue StandardError, java.lang.Exception => e
@@ -254,7 +254,7 @@ class LogStash::Inputs::SDEE < LogStash::Inputs::Base
   private
   def apply_metadata(event, request, response=nil, execution_time=nil)
     #return unless @metadata_target
-    event.set("[@metadata_target]") = event_metadata(request, response, execution_time)
+    event.set("[@metadata_target]", event_metadata(request, response, execution_time))
   end
 
   private
