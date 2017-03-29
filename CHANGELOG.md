@@ -1,3 +1,5 @@
+* 0.7.7
+  - logstash 5.x plugin API
 * 0.7.1
   - something seriously broken in rubysl-rexml 2.0.4 gem
     it's trying to install without success even if already installed
